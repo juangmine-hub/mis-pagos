@@ -21,11 +21,113 @@ const MONTH_FORMAT=new Intl.DateTimeFormat("es-CO",{
   year:"numeric"
 });
 
-const SHORT_DATE_FORMAT=new Intl.DateTimeFormat("es-CO",{
-  day:"numeric",
-  month:"short",
-  year:"numeric"
-});
+const DEFAULT_CATEGORIES=[
+  "Servicios públicos",
+  "Tarjetas",
+  "Salud",
+  "Seguros",
+  "Impuestos",
+  "Suscripciones",
+  "Educación",
+  "Vivienda",
+  "Transporte",
+  "Préstamos",
+  "Administración",
+  "Otros"
+];
+
+
+/* =========================
+   CATEGORÍAS
+========================= */
+
+function normalizeCategoryKey(value){
+  return String(value||"")
+    .trim()
+    .toLocaleLowerCase("es")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/\s+/g," ");
+}
+
+
+async function getAvailableCategories(){
+  const obligations=await getAll("obligations");
+
+  const categories=[
+    ...DEFAULT_CATEGORIES,
+    ...obligations
+      .map(o=>o.category)
+      .filter(Boolean)
+  ];
+
+  const unique=new Map();
+
+  for(const category of categories){
+    const clean=String(category).trim();
+
+    if(!clean) continue;
+
+    const key=normalizeCategoryKey(clean);
+
+    if(!unique.has(key)){
+      unique.set(key,clean);
+    }
+  }
+
+  return [...unique.values()]
+    .sort((a,b)=>
+      a.localeCompare(b,"es",{
+        sensitivity:"base"
+      })
+    );
+}
+
+
+async function renderCategoryOptions(){
+  const datalist=
+    document.getElementById("categoryOptions");
+
+  if(!datalist) return;
+
+  const categories=
+    await getAvailableCategories();
+
+  datalist.innerHTML="";
+
+  for(const category of categories){
+    const option=
+      document.createElement("option");
+
+    option.value=category;
+
+    datalist.appendChild(option);
+  }
+}
+
+
+async function canonicalCategoryName(value){
+  const clean=String(value||"")
+    .trim()
+    .replace(/\s+/g," ");
+
+  if(!clean) return "";
+
+  const categories=
+    await getAvailableCategories();
+
+  const key=
+    normalizeCategoryKey(clean);
+
+  const existing=
+    categories.find(
+      category=>
+        normalizeCategoryKey(category)
+        === key
+    );
+
+  return existing||clean;
+}
 
 
 /* =========================
