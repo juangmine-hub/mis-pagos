@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#0f172a">
+
+  <title>Mis Pagos</title>
+
+  <link rel="stylesheet" href="./styles.css?v=1">
+  <link rel="manifest" href="./manifest.json?v=5">
+  <link rel="apple-touch-icon" href="./icon-mis-pagos-v2.png">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mis Pagos">
+</head>
+
+<body>
+
+  <header>
+    <h1>Mis Pagos</h1>
+    <p>Control personal de obligaciones</p>
+  </header>
+
+  <main>
+
+    <!-- INICIO -->
+    <section id="screen-home" class="screen active">
+
+      <div class="month-row">
+        <button class="icon-btn" onclick="changeMonth(-1)">‹</button>
+        <h2 id="monthTitle"></h2>
+        <button class="icon-btn" onclick="changeMonth(1)">›</button>
+      </div>
+
+      <div class="summary">
+        <div id="summaryCount" class="summary-big">0 de 0</div>
+        <div id="summaryMoney" class="summary-small">$0 pendientes</div>
+
+        <div class="progress">
+          <div id="progressBar"></div>
+        </div>
+      </div>
+
+      <div class="filters">
+        <button class="filter-btn" data-filter="q1">1–15</button>
+        <button class="filter-btn" data-filter="q2">16–fin</button>
+        <button class="filter-btn active" data-filter="month">Mes</button>
+      </div>
+
+      <div id="paymentsContainer"></div>
+
+    </section>
+
+
+    <!-- HISTORIAL -->
+    <section id="screen-history" class="screen">
+
+      <h2>Historial</h2>
+
+      <p class="small">
+        Toca un mes para consultar el detalle.
+      </p>
+
+      <div id="historyContainer"></div>
+
+    </section>
+
+
+    <!-- DETALLE HISTORIAL -->
+    <section id="screen-history-detail" class="screen">
+
+      <div class="back-row">
+
+        <button class="icon-btn" onclick="backToHistory()">
+          ‹
+        </button>
+
+        <h2 id="historyDetailTitle"></h2>
+
+      </div>
+
+      <div class="history-progress-card">
+
+        <div class="history-progress-top">
+
+          <div>
+            <div class="small light">
+              Progreso del mes
+            </div>
+
+            <strong id="historyDetailCount">
+              0 de 0 pagos
+            </strong>
+          </div>
+
+          <div
+            id="historyDetailPercent"
+            class="history-progress-percent"
+          >
+            0%
+          </div>
+
+        </div>
+
+        <div class="progress">
+          <div id="historyDetailProgress"></div>
+        </div>
+
+      </div>
+
+      <div class="month-summary-grid">
+
+        <div class="metric">
+          <div class="metric-label">Total del mes</div>
+          <div id="historyTotal" class="metric-value">$0</div>
+        </div>
+
+        <div class="metric green">
+          <div class="metric-label">Pagado</div>
+          <div id="historyPaid" class="metric-value">$0</div>
+        </div>
+
+        <div class="metric red">
+          <div class="metric-label">Pendiente</div>
+          <div id="historyPending" class="metric-value">$0</div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">Obligaciones</div>
+          <div id="historyObligations" class="metric-value">0</div>
+        </div>
+
+      </div>
+
+      <div class="history-status-filters">
+
+        <button
+          class="history-filter-btn active"
+          data-history-filter="all"
+        >
+          Todos
+        </button>
+
+        <button
+          class="history-filter-btn"
+          data-history-filter="pending"
+        >
+          Pendientes
+        </button>
+
+        <button
+          class="history-filter-btn"
+          data-history-filter="paid"
+        >
+          Pagados
+        </button>
+
+      </div>
+
+      <select
+        id="historyCategoryFilter"
+        class="history-category-select"
+        onchange="historyCategoryChanged()"
+      >
+        <option value="all">
+          Todas las categorías
+        </option>
+      </select>
+
+      <div id="historyDetailContainer"></div>
+
+    </section>
+
+
+    <!-- OBLIGACIONES -->
+    <section id="screen-obligations" class="screen">
+
+      <h2>Obligaciones</h2>
+
+      <button
+        class="btn btn-primary full"
+        onclick="openNewObligation()"
+      >
+        + Nueva obligación
+      </button>
+
+      <div
+        id="obligationsContainer"
+        class="top-gap"
+      ></div>
+
+    </section>
+
+
+    <!-- AJUSTES -->
+    <section id="screen-settings" class="screen">
+
+      <h2>Ajustes</h2>
+
+      <div class="card">
+
+        <h3>Respaldo</h3>
+
+        <p class="small">
+          Guarda obligaciones, valores, historial y notas.
+        </p>
+
+        <button
+          class="btn btn-primary full"
+          onclick="exportBackup()"
+        >
+          Exportar respaldo
+        </button>
+
+        <input
+          id="importFile"
+          type="file"
+          accept=".json,application/json"
+          hidden
+          onchange="importBackup(event)"
+        >
+
+        <button
+          class="btn btn-secondary full top-small"
+          onclick="document.getElementById('importFile').click()"
+        >
+          Importar respaldo
+        </button>
+
+      </div>
+
+      <div class="card">
+
+        <h3>Excel / CSV</h3>
+
+        <p class="small">
+          Exporta el historial completo.
+        </p>
+
+        <button
+          class="btn btn-secondary full"
+          onclick="exportCSV()"
+        >
+          Exportar CSV
+        </button>
+
+      </div>
+
+      <div class="card danger-zone">
+
+        <h3>Reiniciar aplicación</h3>
+
+        <p class="small">
+          Elimina obligaciones e historial y vuelve a cargar ejemplos.
+        </p>
+
+        <button
+          class="btn btn-danger full"
+          onclick="resetApp()"
+        >
+          Borrar y reiniciar
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- NAVEGACIÓN -->
+  <nav>
+
+    <button class="nav-btn active" data-screen="home">
+      <span>✓</span>
+      Inicio
+    </button>
+
+    <button class="nav-btn" data-screen="history">
+      <span>◷</span>
+      Historial
+    </button>
+
+    <button class="nav-btn" data-screen="obligations">
+      <span>☷</span>
+      Obligaciones
+    </button>
+
+    <button class="nav-btn" data-screen="settings">
+      <span>⚙</span>
+      Ajustes
+    </button>
+
+  </nav>
+
+
+  <!-- MODAL OBLIGACIÓN -->
+  <dialog id="obligationDialog">
+
+    <div class="dialog-body">
+
+      <h2 id="dialogTitle">
+        Nueva obligación
+      </h2>
+
+      <form id="obligationForm">
+
+        <input id="obligationId" type="hidden">
+
+        <label>Nombre</label>
+
+        <input
+          id="name"
+          required
+          placeholder="Ej. Energía"
+        >
+
+        <label>Categoría</label>
+
+        <select id="category">
+          <option>Servicios públicos</option>
+          <option>Tarjetas</option>
+          <option>Salud</option>
+          <option>Seguros</option>
+          <option>Impuestos</option>
+          <option>Suscripciones</option>
+          <option>Otros</option>
+        </select>
+
+        <label>Valor esperado</label>
+
+        <input
+          id="amount"
+          type="number"
+          min="0"
+          step="1000"
+          placeholder="Ej. 250000"
+        >
+
+        <label>Frecuencia</label>
+
+        <select
+          id="frequency"
+          onchange="frequencyChanged()"
+        >
+          <option value="monthly">Mensual</option>
+          <option value="biweekly">Quincenal</option>
+          <option value="custom">Personalizada</option>
+        </select>
+
+        <label>Día(s) de vencimiento</label>
+
+        <input
+          id="dueDays"
+          placeholder="Ej. 15 o 5,20"
+          required
+        >
+
+        <p class="small">
+          Para varios vencimientos usa comas. Ejemplo: 5,20.
+        </p>
+
+        <label>Observación general</label>
+
+        <textarea
+          id="notes"
+          rows="2"
+          placeholder="Opcional"
+        ></textarea>
+
+        <div
+          id="editInfo"
+          class="info-box hidden"
+        >
+          Los registros históricos ya guardados conservan sus datos.
+        </div>
+
+        <div class="dialog-actions">
+
+          <button
+            type="button"
+            class="btn btn-secondary full"
+            onclick="document.getElementById('obligationDialog').close()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-primary full"
+          >
+            Guardar
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </dialog>
+
+
+  <!-- MODAL REGISTRO HISTÓRICO -->
+  <dialog id="recordDialog">
+
+    <div class="dialog-body">
+
+      <h2>Editar registro</h2>
+
+      <div
+        id="recordDialogName"
+        class="record-title"
+      ></div>
+
+      <form id="recordForm">
+
+        <input id="recordKey" type="hidden">
+
+        <label>Valor de este período</label>
+
+        <input
+          id="recordAmount"
+          type="number"
+          min="0"
+          step="1"
+        >
+
+        <label>Estado</label>
+
+        <select
+          id="recordStatus"
+          onchange="recordStatusChanged()"
+        >
+          <option value="pending">Pendiente</option>
+          <option value="paid">Pagado</option>
+        </select>
+
+        <div id="recordPaidAtContainer">
+
+          <label>Fecha y hora de pago</label>
+
+          <input
+            id="recordPaidAt"
+            type="datetime-local"
+          >
+
+        </div>
+
+        <label>Nota de este pago</label>
+
+        <textarea
+          id="recordPaymentNote"
+          rows="3"
+          placeholder="Ej. Pago total del extracto"
+        ></textarea>
+
+        <div class="dialog-actions">
+
+          <button
+            type="button"
+            class="btn btn-secondary full"
+            onclick="document.getElementById('recordDialog').close()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-primary full"
+          >
+            Guardar cambios
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </dialog>
+
+
+  <script src="./app.js?v=1"></script>
+
+</body>
+</html>
