@@ -9,7 +9,7 @@
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "./icon-mis-pagos-v2.png",
+      "src": "./icon-mis-pagos-v2.PNG",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
