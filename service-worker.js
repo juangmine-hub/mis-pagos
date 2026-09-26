@@ -1,9 +1,10 @@
-const CACHE_NAME = "mis-pagos-v2";
+const CACHE_NAME = "mis-pagos-v3";
 
 const APP_FILES = [
   "./",
   "./index.html",
-  "./manifest.json"
+  "./manifest.json",
+  "./icon-1024.png"
 ];
 
 self.addEventListener("install", event => {
