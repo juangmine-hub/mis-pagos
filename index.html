@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Mis Pagos</title>
+
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --green: #16a34a;
+      --green-bg: #dcfce7;
+      --yellow: #ca8a04;
+      --yellow-bg: #fef9c3;
+      --red: #dc2626;
+      --red-bg: #fee2e2;
+      --nav: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 92px;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    header {
+      background: #0f172a;
+      color: white;
+      padding: calc(18px + env(safe-area-inset-top)) 18px 18px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    main {
+      max-width: 720px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .month-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .month-row h2 {
+      font-size: 20px;
+      margin: 0;
+      text-transform: capitalize;
+    }
+
+    .icon-btn {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 13px;
+      cursor: pointer;
+    }
+
+    .summary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .summary-big {
+      font-size: 30px;
+      font-weight: 700;
+    }
+
+    .summary-small {
+      font-size: 14px;
+      opacity: .9;
+      margin-top: 4px;
+    }
+
+    .progress {
+      height: 8px;
+      background: rgba(255,255,255,.25);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+
+    .progress > div {
+      height: 100%;
+      background: white;
+      width: 0;
+      transition: width .25s ease;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .filter-btn {
+      border: 0;
+      background: transparent;
+      padding: 10px 6px;
+      border-radius: 9px;
+      color: #475569;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .filter-btn.active {
+      background: white;
+      color: var(--primary);
+      font-weight: 600;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+
+    .section-title {
+      margin: 20px 2px 9px;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .payment {
+      background: var(--card);
+      border-radius: 15px;
+      padding: 14px;
+      margin-bottom: 9px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--border);
+    }
+
+    .check {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      background: white;
+      flex: 0 0 auto;
+      cursor: pointer;
+      font-size: 19px;
+      color: white;
+    }
+
+    .payment.paid .check {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .payment.paid .payment-name {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .payment-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .payment-name {
+      font-weight: 650;
+      font-size: 16px;
+    }
+
+    .payment-meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .payment-value {
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .badge {
+      font-size: 11px;
+      border-radius: 99px;
+      padding: 3px 7px;
+      display: inline-block;
+      margin-top: 5px;
+    }
+
+    .badge.red {
+      color: var(--red);
+      background: var(--red-bg);
+    }
+
+    .badge.yellow {
+      color: #854d0e;
+      background: var(--yellow-bg);
+    }
+
+    .badge.green {
+      color: #166534;
+      background: var(--green-bg);
+    }
+
+    .empty {
+      background: white;
+      padding: 30px 20px;
+      text-align: center;
+      border-radius: 16px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+    }
+
+    .obligation {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .obligation + .obligation {
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 15px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .full {
+      width: 100%;
+    }
+
+    form label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin: 13px 0 5px;
+    }
+
+    form input, form select, form textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: white;
+    }
+
+    dialog {
+      width: calc(100% - 28px);
+      max-width: 520px;
+      border: 0;
+      border-radius: 18px;
+      padding: 0;
+    }
+
+    dialog::backdrop {
+      background: rgba(15,23,42,.55);
+    }
+
+    .dialog-body {
+      padding: 18px;
+    }
+
+    .dialog-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--nav);
+      border-top: 1px solid var(--border);
+      padding: 8px 5px calc(8px + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      z-index: 10;
+    }
+
+    .nav-btn {
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 6px 2px;
+    }
+
+    .nav-btn span {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 2px;
+    }
+
+    .nav-btn.active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .history-month {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-score {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .danger-zone {
+      border-color: #fecaca;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>Mis Pagos</h1>
+  <p>Control personal de obligaciones</p>
+</header>
+
+<main>
+
+  <!-- INICIO -->
+  <section id="screen-home" class="screen active">
+
+    <div class="month-row">
+      <button class="icon-btn" onclick="changeMonth(-1)">‹</button>
+      <h2 id="monthTitle"></h2>
+      <button class="icon-btn" onclick="changeMonth(1)">›</button>
+    </div>
+
+    <div class="summary">
+      <div id="summaryCount" class="summary-big">0 de 0</div>
+      <div id="summaryMoney" class="summary-small">$0 pendientes</div>
+      <div class="progress">
+        <div id="progressBar"></div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn" data-filter="q1">1–15</button>
+      <button class="filter-btn" data-filter="q2">16–fin</button>
+      <button class="filter-btn active" data-filter="month">Mes</button>
+    </div>
+
+    <div id="paymentsContainer"></div>
+
+  </section>
+
+  <!-- HISTORIAL -->
+  <section id="screen-history" class="screen">
+    <h2>Historial</h2>
+    <div id="historyContainer"></div>
+  </section>
+
+  <!-- OBLIGACIONES -->
+  <section id="screen-obligations" class="screen">
+    <h2>Obligaciones</h2>
+
+    <button class="btn btn-primary full" onclick="openNewObligation()">
+      + Nueva obligación
+    </button>
+
+    <div id="obligationsContainer" style="margin-top:14px"></div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section id="screen-settings" class="screen">
+    <h2>Ajustes</h2>
+
+    <div class="card">
+      <h3>Respaldo</h3>
+      <p class="small">
+        Guarda una copia de tus obligaciones y pagos.
+      </p>
+
+      <button class="btn btn-primary full" onclick="exportBackup()">
+        Exportar respaldo
+      </button>
+
+      <input
+        id="importFile"
+        type="file"
+        accept=".json,application/json"
+        hidden
+        onchange="importBackup(event)"
+      />
+
+      <button
+        class="btn btn-secondary full"
+        style="margin-top:8px"
+        onclick="document.getElementById('importFile').click()"
+      >
+        Importar respaldo
+      </button>
+    </div>
+
+    <div class="card">
+      <h3>Excel / CSV</h3>
+      <p class="small">
+        Exporta el historial de pagos realizados.
+      </p>
+
+      <button class="btn btn-secondary full" onclick="exportCSV()">
+        Exportar CSV
+      </button>
+    </div>
+
+    <div class="card danger-zone">
+      <h3>Datos de prueba</h3>
+      <p class="small">
+        Borra todos los datos y vuelve a cargar los ejemplos iniciales.
+      </p>
+
+      <button class="btn btn-danger full" onclick="resetApp()">
+        Reiniciar aplicación
+      </button>
+    </div>
+  </section>
+
+</main>
+
+<nav>
+  <button class="nav-btn active" data-screen="home">
+    <span>✓</span>
+    Inicio
+  </button>
+
+  <button class="nav-btn" data-screen="history">
+    <span>◷</span>
+    Historial
+  </button>
+
+  <button class="nav-btn" data-screen="obligations">
+    <span>☷</span>
+    Obligaciones
+  </button>
+
+  <button class="nav-btn" data-screen="settings">
+    <span>⚙</span>
+    Ajustes
+  </button>
+</nav>
+
+<dialog id="obligationDialog">
+  <div class="dialog-body">
+
+    <h2 id="dialogTitle">Nueva obligación</h2>
+
+    <form id="obligationForm">
+
+      <input id="obligationId" type="hidden" />
+
+      <label>Nombre</label>
+      <input id="name" required placeholder="Ej. Energía" />
+
+      <label>Categoría</label>
+      <select id="category">
+        <option>Servicios públicos</option>
+        <option>Tarjetas</option>
+        <option>Salud</option>
+        <option>Seguros</option>
+        <option>Impuestos</option>
+        <option>Suscripciones</option>
+        <option>Otros</option>
+      </select>
+
+      <label>Valor esperado</label>
+      <input
+        id="amount"
+        type="number"
+        min="0"
+        step="1000"
+        placeholder="Ej. 250000"
+      />
+
+      <label>Frecuencia</label>
+      <select id="frequency" onchange="frequencyChanged()">
+        <option value="monthly">Mensual</option>
+        <option value="biweekly">Quincenal</option>
+        <option value="custom">Personalizada</option>
+      </select>
+
+      <label>Día(s) de vencimiento</label>
+      <input
+        id="dueDays"
+        placeholder="Ej. 15 o 5,20"
+        required
+      />
+
+      <div class="small" style="margin-top:6px">
+        Para varios vencimientos usa comas. Ejemplo: 5,20.
+      </div>
+
+      <label>Observación</label>
+      <textarea
+        id="notes"
+        rows="2"
+        placeholder="Opcional"
+      ></textarea>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary full"
+          onclick="document.getElementById('obligationDialog').close()">
+          Cancelar
+        </button>
+
+        <button type="submit" class="btn btn-primary full">
+          Guardar
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</dialog>
+
+<script>
+  const DB_NAME = "MisPagosDB";
+  const DB_VERSION = 1;
+
+  let db;
+  let currentDate = new Date();
+  currentDate.setDate(1);
+
+  let currentFilter = "month";
+
+  const COP = new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0
+  });
+
+  const MONTH_FORMAT = new Intl.DateTimeFormat("es-CO", {
+    month: "long",
+    year: "numeric"
+  });
+
+  // -----------------------------
+  // BASE DE DATOS
+  // -----------------------------
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+      request.onupgradeneeded = event => {
+        const database = event.target.result;
+
+        if (!database.objectStoreNames.contains("obligations")) {
+          database.createObjectStore("obligations", {
+            keyPath: "id"
+          });
+        }
+
+        if (!database.objectStoreNames.contains("payments")) {
+          database.createObjectStore("payments", {
+            keyPath: "key"
+          });
+        }
+      };
+
+      request.onsuccess = () => {
+        db = request.result;
+        resolve();
+      };
+
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  function storeTransaction(storeName, mode = "readonly") {
+    return db.transaction(storeName, mode).objectStore(storeName);
+  }
+
+  function getAll(storeName) {
+    return new Promise((resolve, reject) => {
+      const req = storeTransaction(storeName).getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function put(storeName, value) {
+    return new Promise((resolve, reject) => {
+      const req = storeTransaction(storeName, "readwrite").put(value);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function remove(storeName, key) {
+    return new Promise((resolve, reject) => {
+      const req = storeTransaction(storeName, "readwrite").delete(key);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function clearStore(storeName) {
+    return new Promise((resolve, reject) => {
+      const req = storeTransaction(storeName, "readwrite").clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // -----------------------------
+  // DATOS DE EJEMPLO
+  // -----------------------------
+
+  async function seedExamples() {
+    const current = await getAll("obligations");
+
+    if (current.length) return;
+
+    const examples = [
+      {
+        id: crypto.randomUUID(),
+        name: "Energía",
+        category: "Servicios públicos",
+        amount: 185000,
+        frequency: "monthly",
+        dueDays: [8],
+        notes: ""
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "Acueducto",
+        category: "Servicios públicos",
+        amount: 96000,
+        frequency: "monthly",
+        dueDays: [12],
+        notes: ""
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "Tarjeta Visa",
+        category: "Tarjetas",
+        amount: 450000,
+        frequency: "monthly",
+        dueDays: [15],
+        notes: "Pago tarjeta"
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "Medicina prepagada",
+        category: "Salud",
+        amount: 320000,
+        frequency: "monthly",
+        dueDays: [25],
+        notes: ""
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "Internet",
+        category: "Servicios públicos",
+        amount: 110000,
+        frequency: "monthly",
+        dueDays: [28],
+        notes: ""
+      }
+    ];
+
+    for (const item of examples) {
+      await put("obligations", item);
+    }
+  }
+
+  // -----------------------------
+  // FECHAS Y OCURRENCIAS
+  // -----------------------------
+
+  function monthKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  function daysInMonth(date) {
+    return new Date(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      0
+    ).getDate();
+  }
+
+  function makeOccurrences(obligation, date) {
+    const maxDay = daysInMonth(date);
+    const ym = monthKey(date);
+
+    return obligation.dueDays.map((originalDay, index) => {
+      const actualDay = Math.min(Number(originalDay), maxDay);
+
+      return {
+        key: `${ym}|${obligation.id}|${index}`,
+        obligation,
+        day: actualDay,
+        originalDay,
+        date: new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          actualDay
+        )
+      };
+    });
+  }
+
+  async function getMonthOccurrences(date) {
+    const obligations = await getAll("obligations");
+    const occurrences = [];
+
+    obligations.forEach(obligation => {
+      occurrences.push(...makeOccurrences(obligation, date));
+    });
+
+    return occurrences.sort((a, b) => a.day - b.day);
+  }
+
+  // -----------------------------
+  // PAGOS
+  // -----------------------------
+
+  async function togglePayment(occurrenceKey) {
+    const payments = await getAll("payments");
+    const existing = payments.find(p => p.key === occurrenceKey);
+
+    if (existing) {
+      await remove("payments", occurrenceKey);
+    } else {
+      const occurrences = await getMonthOccurrences(currentDate);
+      const occurrence = occurrences.find(o => o.key === occurrenceKey);
+
+      if (!occurrence) return;
+
+      await put("payments", {
+        key: occurrenceKey,
+        obligationId: occurrence.obligation.id,
+        month: monthKey(currentDate),
+        dueDay: occurrence.day,
+        amount: occurrence.obligation.amount || 0,
+        paidAt: new Date().toISOString()
+      });
+    }
+
+    renderAll();
+  }
+
+  // -----------------------------
+  // INICIO
+  // -----------------------------
+
+  async function renderHome() {
+    document.getElementById("monthTitle").textContent =
+      MONTH_FORMAT.format(currentDate);
+
+    const occurrences = await getMonthOccurrences(currentDate);
+    const payments = await getAll("payments");
+    const paidKeys = new Set(payments.map(p => p.key));
+
+    let filtered = occurrences;
+
+    if (currentFilter === "q1") {
+      filtered = occurrences.filter(o => o.day <= 15);
+    }
+
+    if (currentFilter === "q2") {
+      filtered = occurrences.filter(o => o.day >= 16);
+    }
+
+    const paidCount = filtered.filter(o => paidKeys.has(o.key)).length;
+
+    const pendingMoney = filtered
+      .filter(o => !paidKeys.has(o.key))
+      .reduce((total, o) => total + Number(o.obligation.amount || 0), 0);
+
+    document.getElementById("summaryCount").textContent =
+      `${paidCount} de ${filtered.length}`;
+
+    document.getElementById("summaryMoney").textContent =
+      `${COP.format(pendingMoney)} pendientes`;
+
+    const percentage = filtered.length
+      ? (paidCount / filtered.length) * 100
+      : 0;
+
+    document.getElementById("progressBar").style.width =
+      `${percentage}%`;
+
+    const container = document.getElementById("paymentsContainer");
+    container.innerHTML = "";
+
+    if (!filtered.length) {
+      container.innerHTML =
+        `<div class="empty">No hay pagos para este período.</div>`;
+      return;
+    }
+
+    const categories = [...new Set(
+      filtered.map(o => o.obligation.category)
+    )];
+
+    categories.forEach(category => {
+      const title = document.createElement("div");
+      title.className = "section-title";
+      title.textContent = category;
+      container.appendChild(title);
+
+      filtered
+        .filter(o => o.obligation.category === category)
+        .forEach(o => {
+          const paid = paidKeys.has(o.key);
+
+          const div = document.createElement("div");
+          div.className = `payment ${paid ? "paid" : ""}`;
+
+          div.innerHTML = `
+            <button class="check"
+              onclick="togglePayment('${o.key}')">
+              ${paid ? "✓" : ""}
+            </button>
+
+            <div class="payment-main">
+              <div class="payment-name">
+                ${escapeHTML(o.obligation.name)}
+              </div>
+
+              <div class="payment-meta">
+                Vence día ${o.day}
+              </div>
+
+              ${statusBadge(o, paid)}
+            </div>
+
+            <div class="payment-value">
+              ${COP.format(o.obligation.amount || 0)}
+            </div>
+          `;
+
+          container.appendChild(div);
+        });
+    });
+  }
+
+  function statusBadge(occurrence, paid) {
+    if (paid) {
+      return `<span class="badge green">Pagado</span>`;
+    }
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const due = new Date(occurrence.date);
+    due.setHours(0,0,0,0);
+
+    if (monthKey(today) !== monthKey(currentDate)) {
+      return "";
+    }
+
+    const diff = Math.round((due - today) / 86400000);
+
+    if (diff < 0) {
+      return `<span class="badge red">Vencido</span>`;
+    }
+
+    if (diff === 0) {
+      return `<span class="badge yellow">Vence hoy</span>`;
+    }
+
+    if (diff <= 3) {
+      return `<span class="badge yellow">Vence en ${diff} días</span>`;
+    }
+
+    return "";
+  }
+
+  function changeMonth(delta) {
+    currentDate.setMonth(currentDate.getMonth() + delta);
+    renderAll();
+  }
+
+  // -----------------------------
+  // HISTORIAL
+  // -----------------------------
+
+  async function renderHistory() {
+    const container = document.getElementById("historyContainer");
+    container.innerHTML = "";
+
+    const payments = await getAll("payments");
+
+    for (let i = 0; i < 12; i++) {
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() - i);
+
+      const occurrences = await getMonthOccurrences(d);
+      const ym = monthKey(d);
+
+      const monthPayments =
+        payments.filter(p => p.month === ym);
+
+      const paidKeys =
+        new Set(monthPayments.map(p => p.key));
+
+      const paidCount =
+        occurrences.filter(o => paidKeys.has(o.key)).length;
+
+      const paidValue =
+        occurrences
+          .filter(o => paidKeys.has(o.key))
+          .reduce(
+            (sum, o) => sum + Number(o.obligation.amount || 0),
+            0
+          );
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      card.innerHTML = `
+        <div class="history-month">
+          <div>
+            <strong style="text-transform:capitalize">
+              ${MONTH_FORMAT.format(d)}
+            </strong>
+
+            <div class="small">
+              ${COP.format(paidValue)} registrados
+            </div>
+          </div>
+
+          <div class="history-score">
+            ${paidCount}/${occurrences.length}
+          </div>
+        </div>
+      `;
+
+      container.appendChild(card);
+    }
+  }
+
+  // -----------------------------
+  // OBLIGACIONES
+  // -----------------------------
+
+  async function renderObligations() {
+    const obligations = await getAll("obligations");
+    const container =
+      document.getElementById("obligationsContainer");
+
+    container.innerHTML = "";
+
+    if (!obligations.length) {
+      container.innerHTML =
+        `<div class="empty">Todavía no hay obligaciones.</div>`;
+      return;
+    }
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    obligations
+      .sort((a,b) => a.name.localeCompare(b.name))
+      .forEach(o => {
+        const div = document.createElement("div");
+        div.className = "obligation";
+
+        div.innerHTML = `
+          <div>
+            <strong>${escapeHTML(o.name)}</strong>
+            <div class="small">
+              ${escapeHTML(o.category)} ·
+              día ${o.dueDays.join(", ")} ·
+              ${COP.format(o.amount || 0)}
+            </div>
+          </div>
+
+          <button class="icon-btn"
+            onclick="editObligation('${o.id}')">
+            Editar
+          </button>
+        `;
+
+        card.appendChild(div);
+      });
+
+    container.appendChild(card);
+  }
+
+  function openNewObligation() {
+    document.getElementById("dialogTitle").textContent =
+      "Nueva obligación";
+
+    document.getElementById("obligationForm").reset();
+    document.getElementById("obligationId").value = "";
+    document.getElementById("dueDays").value = "15";
+
+    document.getElementById("obligationDialog").showModal();
+  }
+
+  async function editObligation(id) {
+    const obligations = await getAll("obligations");
+    const o = obligations.find(x => x.id === id);
+
+    if (!o) return;
+
+    document.getElementById("dialogTitle").textContent =
+      "Editar obligación";
+
+    document.getElementById("obligationId").value = o.id;
+    document.getElementById("name").value = o.name;
+    document.getElementById("category").value = o.category;
+    document.getElementById("amount").value = o.amount || "";
+    document.getElementById("frequency").value = o.frequency;
+    document.getElementById("dueDays").value =
+      o.dueDays.join(",");
+
+    document.getElementById("notes").value = o.notes || "";
+
+    document.getElementById("obligationDialog").showModal();
+  }
+
+  function frequencyChanged() {
+    const frequency =
+      document.getElementById("frequency").value;
+
+    const dueDays =
+      document.getElementById("dueDays");
+
+    if (frequency === "biweekly") {
+      dueDays.value = "15,30";
+    }
+  }
+
+  document
+    .getElementById("obligationForm")
+    .addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const rawDays =
+        document.getElementById("dueDays").value;
+
+      const dueDays = [
+        ...new Set(
+          rawDays
+            .split(",")
+            .map(x => Number(x.trim()))
+            .filter(x => x >= 1 && x <= 31)
+        )
+      ].sort((a,b) => a-b);
+
+      if (!dueDays.length) {
+        alert("Debes indicar al menos un día válido entre 1 y 31.");
+        return;
+      }
+
+      const existingId =
+        document.getElementById("obligationId").value;
+
+      const obligation = {
+        id: existingId || crypto.randomUUID(),
+        name: document.getElementById("name").value.trim(),
+        category: document.getElementById("category").value,
+        amount: Number(
+          document.getElementById("amount").value || 0
+        ),
+        frequency:
+          document.getElementById("frequency").value,
+        dueDays,
+        notes:
+          document.getElementById("notes").value.trim()
+      };
+
+      await put("obligations", obligation);
+
+      document.getElementById("obligationDialog").close();
+
+      renderAll();
+    });
+
+  // -----------------------------
+  // RESPALDO
+  // -----------------------------
+
+  async function exportBackup() {
+    const data = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      obligations: await getAll("obligations"),
+      payments: await getAll("payments")
+    };
+
+    downloadFile(
+      `mis-pagos-respaldo-${monthKey(new Date())}.json`,
+      JSON.stringify(data, null, 2),
+      "application/json"
+    );
+  }
+
+  async function importBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      if (
+        !Array.isArray(data.obligations) ||
+        !Array.isArray(data.payments)
+      ) {
+        throw new Error("Formato inválido");
+      }
+
+      if (!confirm(
+        "Esto reemplazará los datos actuales. ¿Continuar?"
+      )) return;
+
+      await clearStore("obligations");
+      await clearStore("payments");
+
+      for (const o of data.obligations) {
+        await put("obligations", o);
+      }
+
+      for (const p of data.payments) {
+        await put("payments", p);
+      }
+
+      alert("Respaldo restaurado correctamente.");
+
+      renderAll();
+
+    } catch {
+      alert("No fue posible importar el respaldo.");
+    }
+
+    event.target.value = "";
+  }
+
+  // -----------------------------
+  // CSV
+  // -----------------------------
+
+  async function exportCSV() {
+    const obligations = await getAll("obligations");
+    const payments = await getAll("payments");
+
+    const map = new Map(
+      obligations.map(o => [o.id, o])
+    );
+
+    const rows = [
+      [
+        "Mes",
+        "Obligación",
+        "Categoría",
+        "Valor",
+        "Fecha de pago"
+      ]
+    ];
+
+    payments
+      .sort((a,b) =>
+        new Date(a.paidAt) - new Date(b.paidAt)
+      )
+      .forEach(p => {
+        const o = map.get(p.obligationId);
+
+        rows.push([
+          p.month,
+          o?.name || "Obligación eliminada",
+          o?.category || "",
+          p.amount || 0,
+          new Date(p.paidAt).toLocaleString("es-CO")
+        ]);
+      });
+
+    const csv = rows
+      .map(row =>
+        row.map(value =>
+          `"${String(value).replaceAll('"','""')}"`
+        ).join(",")
+      )
+      .join("\n");
+
+    downloadFile(
+      `historial-pagos-${monthKey(new Date())}.csv`,
+      "\ufeff" + csv,
+      "text/csv;charset=utf-8"
+    );
+  }
+
+  // -----------------------------
+  // UTILIDADES
+  // -----------------------------
+
+  function downloadFile(filename, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
+
+  function escapeHTML(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  async function resetApp() {
+    if (!confirm(
+      "Se eliminarán obligaciones e historial. ¿Continuar?"
+    )) return;
+
+    await clearStore("obligations");
+    await clearStore("payments");
+    await seedExamples();
+    renderAll();
+  }
+
+  // -----------------------------
+  // NAVEGACIÓN
+  // -----------------------------
+
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".nav-btn")
+        .forEach(b => b.classList.remove("active"));
+
+      btn.classList.add("active");
+
+      document.querySelectorAll(".screen")
+        .forEach(screen => screen.classList.remove("active"));
+
+      document
+        .getElementById(`screen-${btn.dataset.screen}`)
+        .classList.add("active");
+
+      renderAll();
+    });
+  });
+
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-btn")
+        .forEach(b => b.classList.remove("active"));
+
+      btn.classList.add("active");
+      currentFilter = btn.dataset.filter;
+
+      renderHome();
+    });
+  });
+
+  async function renderAll() {
+    await renderHome();
+    await renderHistory();
+    await renderObligations();
+  }
+
+  // -----------------------------
+  // INICIO APP
+  // -----------------------------
+
+  async function init() {
+    try {
+      await openDB();
+      await seedExamples();
+      await renderAll();
+    } catch (error) {
+      console.error(error);
+      alert(
+        "No fue posible iniciar el almacenamiento local."
+      );
+    }
+  }
+
+  init();
+</script>
+
+</body>
+</html>
