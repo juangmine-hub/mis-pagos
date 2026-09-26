@@ -325,15 +325,27 @@
 
         <label>Categoría</label>
 
-        <select id="category">
-          <option>Servicios públicos</option>
-          <option>Tarjetas</option>
-          <option>Salud</option>
-          <option>Seguros</option>
-          <option>Impuestos</option>
-          <option>Suscripciones</option>
-          <option>Otros</option>
-        </select>
+<input
+  id="category"
+  list="categoryOptions"
+  required
+  placeholder="Selecciona o escribe una categoría"
+>
+
+<datalist id="categoryOptions">
+  <option value="Servicios públicos">
+  <option value="Tarjetas">
+  <option value="Salud">
+  <option value="Seguros">
+  <option value="Impuestos">
+  <option value="Suscripciones">
+  <option value="Educación">
+  <option value="Vivienda">
+  <option value="Transporte">
+  <option value="Préstamos">
+  <option value="Administración">
+  <option value="Otros">
+</datalist>
 
         <label>Valor esperado</label>
 
