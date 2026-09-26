@@ -1233,6 +1233,7 @@ async function openNewObligation(){
 }
 
 async function editObligation(id){
+  await renderCategoryOptions();
   const o=await getOne("obligations",id);
 
   if(!o) return;
