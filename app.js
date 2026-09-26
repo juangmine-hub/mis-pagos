@@ -1216,7 +1216,9 @@ async function renderObligations(){
   container.appendChild(card);
 }
 
-function openNewObligation(){
+async function openNewObligation(){
+  await renderCategoryOptions();
+  
   document.getElementById("dialogTitle").textContent=
     "Nueva obligación";
 
