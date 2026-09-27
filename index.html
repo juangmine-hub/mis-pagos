@@ -530,6 +530,43 @@
 
   </dialog>
 
+<dialog id="paymentDetailDialog">
+
+  <div class="dialog-body">
+
+    <h2 id="paymentDetailName">
+      Detalle del pago
+    </h2>
+
+    <div
+      id="paymentDetailMeta"
+      class="detail-meta"
+    ></div>
+
+    <h3 class="detail-heading">
+      Observaciones
+    </h3>
+
+    <div
+      id="paymentDetailNotes"
+      class="detail-notes"
+    ></div>
+
+    <div class="dialog-actions">
+
+      <button
+        type="button"
+        class="btn btn-primary full"
+        onclick="document.getElementById('paymentDetailDialog').close()"
+      >
+        Cerrar
+      </button>
+
+    </div>
+
+  </div>
+
+</dialog>
 
   <script src="./app.js?v=1"></script>
 
