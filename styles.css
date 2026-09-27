@@ -635,8 +635,8 @@ nav{
 .detail-hint{
   margin-top:6px;
   color:var(--primary);
-  font-size:12px;
-  font-weight:600;
+  font-size:10px;
+  font-weight:500;
 }
 
 .detail-meta{

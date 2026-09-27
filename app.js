@@ -1025,7 +1025,7 @@ async function renderHome(){
             ${noteText}
             ${r.notes
   ? `<div class="detail-hint">
-       Ver observación y enlaces ›
+       Ver detalle ›
      </div>`
   : ""
 }
