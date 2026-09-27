@@ -603,9 +603,15 @@ nav{
 
 .detail-hint{
   margin-top:5px;
+  padding:0;
+  border:0;
+  background:none;
   color:var(--primary);
+  font-family:inherit;
   font-size:10px;
   font-weight:500;
+  text-align:left;
+  cursor:pointer;
 }
 
 
