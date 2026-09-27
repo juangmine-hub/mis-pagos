@@ -809,6 +809,99 @@ async function editPeriodAmount(key){
   await renderAll();
 }
 
+async function openPaymentDetail(key){
+  const record=
+    await getOne("periodRecords",key);
+
+  if(!record) return;
+
+  document.getElementById(
+    "paymentDetailName"
+  ).textContent=
+    record.name;
+
+  document.getElementById(
+    "paymentDetailMeta"
+  ).textContent=
+    `${record.category} · Vence día ${record.dueDay} · ${COP.format(record.amount||0)}`;
+
+  const notes=[
+    record.notes||"",
+    record.paymentNote
+      ? `Nota del pago: ${record.paymentNote}`
+      : ""
+  ]
+  .filter(Boolean)
+  .join("\n\n");
+
+  renderTextWithLinks(
+    document.getElementById(
+      "paymentDetailNotes"
+    ),
+    notes
+  );
+
+  document.getElementById(
+    "paymentDetailDialog"
+  ).showModal();
+}
+
+
+function renderTextWithLinks(container,text){
+  container.innerHTML="";
+
+  if(!text){
+    container.textContent=
+      "No hay observaciones registradas.";
+    return;
+  }
+
+  const regex=
+    /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
+
+  let lastIndex=0;
+
+  for(const match of text.matchAll(regex)){
+    const index=match.index;
+
+    if(index>lastIndex){
+      container.appendChild(
+        document.createTextNode(
+          text.slice(lastIndex,index)
+        )
+      );
+    }
+
+    const visibleUrl=
+      match[0];
+
+    const href=
+      visibleUrl.startsWith("http")
+      ? visibleUrl
+      : `https://${visibleUrl}`;
+
+    const link=
+      document.createElement("a");
+
+    link.href=href;
+    link.textContent=visibleUrl;
+    link.target="_blank";
+    link.rel="noopener noreferrer";
+
+    container.appendChild(link);
+
+    lastIndex=
+      index+visibleUrl.length;
+  }
+
+  if(lastIndex<text.length){
+    container.appendChild(
+      document.createTextNode(
+        text.slice(lastIndex)
+      )
+    );
+  }
+}
 
 /* =========================
    INICIO
@@ -889,7 +982,11 @@ async function renderHome(){
 
         div.className=
           `payment ${r.paid?"paid":""}`;
-
+           
+          div.onclick=()=>{
+          openPaymentDetail(r.key);
+          };
+          
         const paidText=r.paidAt
           ? `<div class="paid-date">
                Pagado: ${
