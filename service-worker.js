@@ -1,4 +1,4 @@
-const CACHE_NAME = "mis-pagos-v6";
+const CACHE_NAME = "mis-pagos-v8";
 
 const APP_FILES = [
   "./",
