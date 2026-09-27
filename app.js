@@ -988,11 +988,7 @@ async function renderHome(){
 
         div.className=
           `payment ${r.paid?"paid":""}`;
-           
-          div.onclick=()=>{
-          openPaymentDetail(r.key);
-          };
-          
+
         const paidText=r.paidAt
           ? `<div class="paid-date">
                Pagado: ${
@@ -1012,7 +1008,7 @@ async function renderHome(){
         div.innerHTML=`
           <button
             class="check"
-            onclick="togglePayment('${r.key}')"
+            onclick="event.stopPropagation();togglePayment('${r.key}')"
           >
             ${r.paid?"✓":""}
           </button>
@@ -1029,10 +1025,11 @@ async function renderHome(){
             ${statusBadge(r)}
             ${paidText}
             ${noteText}
-            ${r.notes
-  ? `<div class="detail-hint">
+            ${r.notes||r.paymentNote
+  ? `<button type="button" class="detail-hint"
+       onclick="event.stopPropagation();openPaymentDetail('${r.key}')">
        Ver detalle ›
-     </div>`
+     </button>`
   : ""
 }
           </div>
