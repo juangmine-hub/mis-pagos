@@ -360,13 +360,17 @@
         <label>Frecuencia</label>
 
         <select
-          id="frequency"
-          onchange="frequencyChanged()"
-        >
-          <option value="monthly">Mensual</option>
-          <option value="biweekly">Quincenal</option>
-          <option value="custom">Personalizada</option>
-        </select>
+  id="frequency"
+  onchange="frequencyChanged()"
+>
+  <option value="monthly">Mensual</option>
+  <option value="biweekly">Quincenal</option>
+  <option value="every2months">Cada 2 meses</option>
+  <option value="quarterly">Trimestral</option>
+  <option value="semiannual">Semestral</option>
+  <option value="annual">Anual</option>
+  <option value="custom">Personalizada</option>
+</select>
 
         <label>Día(s) de vencimiento</label>
 
@@ -375,6 +379,32 @@
           placeholder="Ej. 15 o 5,20"
           required
         >
+        <label>Primer mes en que aplica</label>
+    
+<input
+  id="startMonthInput"
+  type="month"
+  required
+>
+
+<div id="customIntervalContainer" class="hidden">
+
+  <label>Repetir cada cuántos meses</label>
+
+  <input
+    id="intervalMonths"
+    type="number"
+    min="1"
+    max="60"
+    step="1"
+    value="2"
+  >
+
+  <p class="small">
+    Ejemplo: 4 = cada cuatro meses.
+  </p>
+
+</div>
 
         <p class="small">
           Para varios vencimientos usa comas. Ejemplo: 5,20.
