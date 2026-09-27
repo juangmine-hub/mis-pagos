@@ -1023,11 +1023,17 @@ async function renderHome(){
             ${statusBadge(r)}
             ${paidText}
             ${noteText}
+            ${r.notes
+  ? `<div class="detail-hint">
+       Ver observación y enlaces ›
+     </div>`
+  : ""
+}
           </div>
 
           <button
             class="amount-btn"
-            onclick="editPeriodAmount('${r.key}')"
+            onclick="event.stopPropagation();editPeriodAmount('${r.key}')"
           >
             ${COP.format(r.amount||0)}
           </button>
@@ -1341,7 +1347,7 @@ async function renderHistoryDetail(){
         item.innerHTML=`
           <button
             class="check"
-            onclick="togglePayment('${r.key}')"
+            onclick="event.stopPropagation();togglePayment('${r.key}')"
           >
             ${r.paid?"✓":""}
           </button>
