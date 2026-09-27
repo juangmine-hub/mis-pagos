@@ -21,6 +21,8 @@ const MONTH_FORMAT=new Intl.DateTimeFormat("es-CO",{
   year:"numeric"
 });
 
+const CATEGORY_STORAGE_KEY="misPagosCategories";
+
 const DEFAULT_CATEGORIES=[
   "Servicios públicos",
   "Tarjetas",
@@ -35,6 +37,139 @@ const DEFAULT_CATEGORIES=[
   "Administración",
   "Otros"
 ];
+
+function normalizeCategoryKey(value){
+  return String(value||"")
+    .trim()
+    .toLocaleLowerCase("es")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/\s+/g," ");
+}
+
+function getStoredCategories(){
+  try{
+    const saved=JSON.parse(
+      localStorage.getItem(CATEGORY_STORAGE_KEY)||"[]"
+    );
+
+    return Array.isArray(saved)
+      ? saved
+      : [];
+  }catch{
+    return [];
+  }
+}
+
+function storeCategory(value){
+  const clean=String(value||"")
+    .trim()
+    .replace(/\s+/g," ");
+
+  if(!clean) return "";
+
+  const stored=getStoredCategories();
+
+  const exists=stored.some(
+    category=>
+      normalizeCategoryKey(category)
+      === normalizeCategoryKey(clean)
+  );
+
+  if(!exists){
+    stored.push(clean);
+
+    localStorage.setItem(
+      CATEGORY_STORAGE_KEY,
+      JSON.stringify(stored)
+    );
+  }
+
+  return clean;
+}
+
+async function getAvailableCategories(){
+  const obligations=await getAll("obligations");
+
+  const categories=[
+    ...DEFAULT_CATEGORIES,
+    ...getStoredCategories(),
+    ...obligations
+      .map(o=>o.category)
+      .filter(Boolean)
+  ];
+
+  const unique=new Map();
+
+  for(const category of categories){
+    const clean=String(category).trim();
+
+    if(!clean) continue;
+
+    const key=normalizeCategoryKey(clean);
+
+    if(!unique.has(key)){
+      unique.set(key,clean);
+    }
+  }
+
+  return [...unique.values()]
+    .sort((a,b)=>
+      a.localeCompare(
+        b,
+        "es",
+        {sensitivity:"base"}
+      )
+    );
+}
+
+async function renderCategoryOptions(){
+  const datalist=
+    document.getElementById("categoryOptions");
+
+  if(!datalist) return;
+
+  const categories=
+    await getAvailableCategories();
+
+  datalist.innerHTML="";
+
+  for(const category of categories){
+    const option=document.createElement("option");
+
+    option.value=category;
+
+    datalist.appendChild(option);
+  }
+}
+
+async function canonicalCategoryName(value){
+  const clean=String(value||"")
+    .trim()
+    .replace(/\s+/g," ");
+
+  if(!clean) return "";
+
+  const categories=
+    await getAvailableCategories();
+
+  const key=
+    normalizeCategoryKey(clean);
+
+  const existing=
+    categories.find(
+      category=>
+        normalizeCategoryKey(category)
+        === key
+    );
+
+  const finalName=
+    existing||clean;
+
+  storeCategory(finalName);
+
+  return finalName;
+}
 
 
 /* =========================
@@ -236,6 +371,42 @@ function previousMonthKey(){
   return monthKey(d);
 }
 
+function monthsBetween(startYM,endYM){
+  const start=dateFromMonthKey(startYM);
+  const end=dateFromMonthKey(endYM);
+
+  return (
+    (end.getFullYear()-start.getFullYear())*12
+    + (end.getMonth()-start.getMonth())
+  );
+}
+
+function recurrenceIntervalMonths(obligation){
+  switch(obligation.frequency){
+
+    case "every2months":
+      return 2;
+
+    case "quarterly":
+      return 3;
+
+    case "semiannual":
+      return 6;
+
+    case "annual":
+      return 12;
+
+    case "custom":
+      return Math.max(
+        1,
+        Number(obligation.intervalMonths)||1
+      );
+
+    default:
+      return 1;
+  }
+}
+
 function toLocalDateTimeValue(iso){
   const date=iso?new Date(iso):new Date();
   const pad=n=>String(n).padStart(2,"0");
@@ -429,10 +600,42 @@ async function migrateToV3(){
 ========================= */
 
 function obligationAppliesToMonth(o,ym){
-  if(o.startMonth && ym<o.startMonth) return false;
-  if(o.endMonth && ym>o.endMonth) return false;
-  if(o.active===false && !o.endMonth) return false;
-  return true;
+
+  if(
+    o.startMonth
+    && ym<o.startMonth
+  ){
+    return false;
+  }
+
+  if(
+    o.endMonth
+    && ym>o.endMonth
+  ){
+    return false;
+  }
+
+  if(
+    o.active===false
+    && !o.endMonth
+  ){
+    return false;
+  }
+
+  const start=
+    o.startMonth||ym;
+
+  const difference=
+    monthsBetween(start,ym);
+
+  if(difference<0){
+    return false;
+  }
+
+  const interval=
+    recurrenceIntervalMonths(o);
+
+  return difference%interval===0;
 }
 
 function buildPeriodRecord(o,date,originalDay,index){
@@ -1229,6 +1432,14 @@ async function openNewObligation(){
 
   document.getElementById("editInfo").classList.add("hidden");
 
+  document.getElementById("startMonthInput").value=
+  monthKey(new Date());
+
+document.getElementById("intervalMonths").value=
+  "2";
+
+frequencyChanged();
+
   document.getElementById("obligationDialog").showModal();
 }
 
@@ -1249,16 +1460,37 @@ async function editObligation(id){
   document.getElementById("dueDays").value=o.dueDays.join(",");
   document.getElementById("notes").value=o.notes||"";
 
+  document.getElementById("startMonthInput").value=
+  o.startMonth||monthKey(new Date());
+
+document.getElementById("intervalMonths").value=
+  o.intervalMonths||2;
+
+frequencyChanged();
+
   document.getElementById("editInfo").classList.remove("hidden");
 
   document.getElementById("obligationDialog").showModal();
 }
 
 function frequencyChanged(){
-  if(
-    document.getElementById("frequency").value==="biweekly"
-  ){
-    document.getElementById("dueDays").value="15,30";
+  const frequency=
+    document.getElementById("frequency").value;
+
+  const intervalBox=
+    document.getElementById(
+      "customIntervalContainer"
+    );
+
+  if(frequency==="biweekly"){
+    document.getElementById("dueDays").value=
+      "15,30";
+  }
+
+  if(frequency==="custom"){
+    intervalBox.classList.remove("hidden");
+  }else{
+    intervalBox.classList.add("hidden");
   }
 }
 
@@ -1577,17 +1809,28 @@ document
         ),
 
       frequency:
-        document.getElementById("frequency").value,
+  document.getElementById("frequency").value,
 
+intervalMonths:
+  document.getElementById("frequency").value==="custom"
+  ? Math.max(
+      1,
+      Number(
+        document.getElementById("intervalMonths").value
+        || 1
+      )
+    )
+  : null,
       dueDays,
 
       notes:
         document.getElementById("notes").value.trim(),
 
       startMonth:
-        previous?.startMonth
-        || monthKey(new Date()),
-
+  document.getElementById("startMonthInput").value
+  || previous?.startMonth
+  || monthKey(new Date()),
+  
       active:true,
 
       createdAt:
@@ -1599,6 +1842,7 @@ document
     };
 
     await put("obligations",obligation);
+    await renderCategoryOptions();
 
     if(existingId){
       await refreshUnpaidCurrentAndFuture(existingId);
