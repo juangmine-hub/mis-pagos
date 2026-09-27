@@ -1567,8 +1567,9 @@ document
         document.getElementById("name").value.trim(),
 
       category:
-        document.getElementById("category").value,
-
+  await canonicalCategoryName(
+    document.getElementById("category").value
+  ),
       amount:
         Number(
           document.getElementById("amount").value
