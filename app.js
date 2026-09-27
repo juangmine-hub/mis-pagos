@@ -21,6 +21,12 @@ const MONTH_FORMAT=new Intl.DateTimeFormat("es-CO",{
   year:"numeric"
 });
 
+const SHORT_DATE_FORMAT=new Intl.DateTimeFormat("es-CO",{
+  day:"2-digit",
+  month:"2-digit",
+  year:"numeric"
+});
+
 const CATEGORY_STORAGE_KEY="misPagosCategories";
 
 const DEFAULT_CATEGORIES=[

@@ -601,6 +601,13 @@ nav{
   font-weight:700;
 }
 
+.detail-hint{
+  margin-top:5px;
+  color:var(--primary);
+  font-size:10px;
+  font-weight:500;
+}
+
 
 /* PANTALLAS PEQUEÑAS */
 
@@ -630,13 +637,6 @@ nav{
 
 .payment{
   cursor:pointer;
-}
-
-.detail-hint{
-  margin-top:6px;
-  color:var(--primary);
-  font-size:10px;
-  font-weight:500;
 }
 
 .detail-meta{
