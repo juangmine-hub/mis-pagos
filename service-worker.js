@@ -1,10 +1,10 @@
-const CACHE_NAME = "mis-pagos-v12";
+const CACHE_NAME = "mis-pagos-v13";
 
 const APP_FILES = [
   "./",
   "./index.html",
-  "./styles.css?v=5",
-  "./app.js?v=6",
+  "./styles.css?v=6",
+  "./app.js?v=7",
   "./manifest.json?v=5",
   "./icon-mis-pagos-v2.PNG"
 ];
