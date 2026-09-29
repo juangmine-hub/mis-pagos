@@ -27,6 +27,17 @@ const SHORT_DATE_FORMAT=new Intl.DateTimeFormat("es-CO",{
   year:"numeric"
 });
 
+const HOME_DATE_FORMAT=new Intl.DateTimeFormat("es-CO",{
+  day:"numeric",
+  month:"short"
+});
+
+const HOME_DATE_YEAR_FORMAT=new Intl.DateTimeFormat("es-CO",{
+  day:"numeric",
+  month:"short",
+  year:"numeric"
+});
+
 const CATEGORY_STORAGE_KEY="misPagosCategories";
 
 const DEFAULT_CATEGORIES=[
@@ -913,6 +924,137 @@ function renderTextWithLinks(container,text){
    INICIO
 ========================= */
 
+function homeDueDate(record){
+  const month=dateFromMonthKey(record.month);
+  const day=Math.min(
+    Math.max(1,Number(record.dueDay)||1),
+    daysInMonth(month)
+  );
+
+  return new Date(
+    month.getFullYear(),
+    month.getMonth(),
+    day
+  );
+}
+
+function homeDateText(date,today){
+  const formatter=
+    date.getFullYear()===today.getFullYear()
+    ? HOME_DATE_FORMAT
+    : HOME_DATE_YEAR_FORMAT;
+
+  return formatter.format(date);
+}
+
+function calendarDaysBetween(from,to){
+  const calendarDay=date=>Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+
+  return (calendarDay(to)-calendarDay(from))/86400000;
+}
+
+function homePaymentState(record,today,selectedMonth){
+  const dueDate=homeDueDate(record);
+
+  if(record.paid===true){
+    const paidAt=record.paidAt
+      ? new Date(record.paidAt)
+      : null;
+
+    return {
+      group:"paid",
+      dueDate,
+      label:paidAt && !Number.isNaN(paidAt.getTime())
+        ? `Pagado ${homeDateText(paidAt,today)}`
+        : "Pagado"
+    };
+  }
+
+  const currentMonth=monthKey(today);
+  const days=calendarDaysBetween(today,dueDate);
+  let group="rest";
+
+  if(selectedMonth<currentMonth ||
+     (selectedMonth===currentMonth && days<0)){
+    group="overdue";
+  }else if(selectedMonth===currentMonth){
+    if(days===0) group="today";
+    else if(days<=3) group="upcoming";
+  }
+
+  return {
+    group,
+    dueDate,
+    label:group==="today"
+      ? "Vence hoy"
+      : `${group==="overdue"?"Venció":"Vence"} ${homeDateText(dueDate,today)}`
+  };
+}
+
+function renderHomeCategoryChart(records){
+  const chart=document.getElementById("categoryChart");
+  chart.innerHTML="";
+  chart.classList.toggle("hidden",records.length===0);
+
+  if(!records.length) return;
+
+  const categories=new Map();
+
+  for(const record of records){
+    const category=String(record.category||"").trim()
+      || "Sin categoría";
+    const values=categories.get(category)
+      || {total:0,paid:0,pending:0};
+    const amount=Number(record.amount)||0;
+
+    values.total+=amount;
+    values[record.paid===true?"paid":"pending"]+=amount;
+    categories.set(category,values);
+  }
+
+  const sorted=[...categories.entries()].sort(
+    (a,b)=>b[1].total-a[1].total
+      || a[0].localeCompare(b[0],"es",{sensitivity:"base"})
+  );
+  const maxTotal=Math.max(0,...sorted.map(([,v])=>v.total));
+
+  chart.innerHTML=`
+    <h3>Distribución por categoría</h3>
+    <div class="category-legend">
+      <span><i class="legend-paid"></i>Pagado</span>
+      <span><i class="legend-pending"></i>Pendiente</span>
+    </div>
+    ${sorted.map(([category,values])=>{
+      const barWidth=maxTotal>0
+        ? Math.max(0,values.total)/maxTotal*100
+        : 0;
+      const paidWidth=values.total>0
+        ? Math.min(100,Math.max(0,values.paid/values.total*100))
+        : 0;
+
+      return `<div class="category-row">
+        <div class="category-row-title">
+          <span>${escapeHTML(category)}</span>
+          <strong>${COP.format(values.total)}</strong>
+        </div>
+        <div class="category-track">
+          <div class="category-bar" style="width:${barWidth}%">
+            <span class="category-paid" style="width:${paidWidth}%"></span>
+            <span class="category-pending" style="width:${100-paidWidth}%"></span>
+          </div>
+        </div>
+        <div class="category-values">
+          Pagado ${COP.format(values.paid)} · Pendiente ${COP.format(values.pending)}
+        </div>
+      </div>`;
+    }).join("")}
+  `;
+}
+
 async function renderHome(){
   document.getElementById("monthTitle").textContent=
     MONTH_FORMAT.format(currentDate);
@@ -930,22 +1072,30 @@ async function renderHome(){
     filtered=records.filter(r=>r.dueDay>=16);
   }
 
-  const paidCount=
-    filtered.filter(r=>r.paid).length;
+  const today=new Date();
+  const selectedMonth=monthKey(currentDate);
+  const items=filtered.map(record=>({
+    record,
+    ...homePaymentState(record,today,selectedMonth)
+  }));
+  const paidCount=items.filter(item=>item.group==="paid").length;
+  const pending=items.filter(item=>item.group!=="paid");
+  const overdueCount=pending.filter(
+    item=>item.group==="overdue"
+  ).length;
 
   const pendingMoney=
-    filtered
-      .filter(r=>!r.paid)
+    pending
       .reduce(
-        (sum,r)=>sum+Number(r.amount||0),
+        (sum,item)=>sum+(Number(item.record.amount)||0),
         0
       );
 
   document.getElementById("summaryCount").textContent=
-    `${paidCount} de ${filtered.length}`;
+    `${paidCount} de ${filtered.length} pagados`;
 
   document.getElementById("summaryMoney").textContent=
-    `${COP.format(pendingMoney)} pendientes`;
+    `${pending.length} pendientes · ${COP.format(pendingMoney)} · ${overdueCount} vencido${overdueCount===1?"":"s"}`;
 
   const percentage=
     filtered.length
@@ -954,6 +1104,8 @@ async function renderHome(){
 
   document.getElementById("progressBar").style.width=
     `${percentage}%`;
+
+  renderHomeCategoryChart(filtered);
 
   const container=
     document.getElementById("paymentsContainer");
@@ -968,36 +1120,41 @@ async function renderHome(){
     return;
   }
 
-  const categories=[
-    ...new Set(
-      filtered.map(r=>r.category)
-    )
+  const groups=[
+    ["overdue","VENCIDOS"],
+    ["today","VENCEN HOY"],
+    ["upcoming","PRÓXIMOS 3 DÍAS"],
+    ["rest","RESTO DEL PERÍODO"],
+    ["paid","PAGADOS"]
   ];
 
-  for(const category of categories){
+  for(const [group,label] of groups){
+    const groupItems=items.filter(item=>item.group===group);
+    if(!groupItems.length) continue;
+
+    groupItems.sort((a,b)=>{
+      const date=item=>group==="paid" && item.record.paidAt
+        && !Number.isNaN(new Date(item.record.paidAt).getTime())
+        ? new Date(item.record.paidAt)
+        : item.dueDate;
+
+      return date(a)-date(b)
+        || String(a.record.name||"").localeCompare(
+          String(b.record.name||""),"es",{sensitivity:"base"}
+        );
+    });
+
     const title=document.createElement("div");
-    title.className="section-title";
-    title.textContent=category;
+    title.className=`section-title home-group-title ${group}`;
+    title.textContent=label;
     container.appendChild(title);
 
-    filtered
-      .filter(r=>r.category===category)
-      .sort((a,b)=>a.dueDay-b.dueDay)
-      .forEach(r=>{
+    groupItems
+      .forEach(({record:r,label:statusText})=>{
         const div=document.createElement("div");
 
         div.className=
-          `payment ${r.paid?"paid":""}`;
-
-        const paidText=r.paidAt
-          ? `<div class="paid-date">
-               Pagado: ${
-                 SHORT_DATE_FORMAT.format(
-                   new Date(r.paidAt)
-                 )
-               }
-             </div>`
-          : "";
+          `payment ${r.paid===true?"paid":""}`;
 
         const noteText=r.paymentNote
           ? `<div class="payment-note">
@@ -1010,7 +1167,7 @@ async function renderHome(){
             class="check"
             onclick="event.stopPropagation();togglePayment('${r.key}')"
           >
-            ${r.paid?"✓":""}
+            ${r.paid===true?"✓":""}
           </button>
 
           <div class="payment-main">
@@ -1019,11 +1176,12 @@ async function renderHome(){
             </div>
 
             <div class="payment-meta">
-              Vence día ${r.dueDay}
+              ${escapeHTML(String(r.category||"").trim()||"Sin categoría")}
             </div>
 
-            ${statusBadge(r)}
-            ${paidText}
+            <div class="home-status ${group}">
+              ${escapeHTML(statusText)}
+            </div>
             ${noteText}
             ${r.notes||r.paymentNote
   ? `<button type="button" class="detail-hint"
@@ -1045,43 +1203,6 @@ async function renderHome(){
         container.appendChild(div);
       });
   }
-}
-
-function statusBadge(record){
-  if(record.paid){
-    return `<span class="badge green">Pagado</span>`;
-  }
-
-  const today=new Date();
-  today.setHours(0,0,0,0);
-
-  if(monthKey(today)!==record.month){
-    return "";
-  }
-
-  const due=dateFromMonthKey(record.month);
-  due.setDate(record.dueDay);
-  due.setHours(0,0,0,0);
-
-  const diff=Math.round(
-    (due-today)/86400000
-  );
-
-  if(diff<0){
-    return `<span class="badge red">Vencido</span>`;
-  }
-
-  if(diff===0){
-    return `<span class="badge yellow">Vence hoy</span>`;
-  }
-
-  if(diff<=3){
-    return `<span class="badge yellow">
-      Vence en ${diff} días
-    </span>`;
-  }
-
-  return "";
 }
 
 function changeMonth(delta){
